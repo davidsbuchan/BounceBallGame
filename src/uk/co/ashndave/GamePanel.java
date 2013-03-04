@@ -18,9 +18,13 @@ public class GamePanel extends JPanel implements Runnable {
 	private Graphics dbg;
 	private Image dbImage = null;
 	
+	private volatile int ballX, ballY;
+	
 	public GamePanel() {
 		setBackground(Color.WHITE);
 		setPreferredSize(new Dimension(PWIDTH, PHEIGHT));
+		ballX = 0;
+		ballY = 0;
 	}
 	
 	@Override
@@ -62,12 +66,15 @@ public class GamePanel extends JPanel implements Runnable {
 			else {
 				dbg = dbImage.getGraphics();
 			}
-			dbg.setColor(Color.white);
-			dbg.fillRect(0, 0, PWIDTH, PHEIGHT);
-			
-			if(gameOver) {
-				gameOverMessage(dbg);
-			}
+		}
+		dbg.setColor(Color.white);
+		dbg.fillRect(0, 0, PWIDTH, PHEIGHT);
+		
+		dbg.setColor(Color.red);
+		dbg.drawOval(ballX, ballY, 10, 10);
+		
+		if(gameOver) {
+			gameOverMessage(dbg);
 		}
 	}
 
@@ -77,7 +84,8 @@ public class GamePanel extends JPanel implements Runnable {
 
 	private void gameUpdate() {
 		if(!gameOver) {
-			
+			ballX++;
+			ballY++;
 		}
 	}
 	
