@@ -19,12 +19,12 @@ public class GamePanel extends JPanel implements Runnable {
 	private Image dbImage = null;
 	
 	private int ballX, ballY;
+	private float yMovement;
 	private static final int SIZE = 10;
 	
 	// Added energy per second;
 	private static final float YFORCE = 400;
 	private float yEnergy;
-	private int yDirection;
 	private long currentTime;
 	private float elapsedTimeInSeconds;
 	private float minEnergyAtImpact = 10;
@@ -34,8 +34,8 @@ public class GamePanel extends JPanel implements Runnable {
 		setPreferredSize(new Dimension(PWIDTH, PHEIGHT));
 		ballX = 250;
 		ballY = 0;
+		yMovement = 0;
 		yEnergy = 0;
-		yDirection = 1;
 	}
 	
 	@Override
@@ -107,10 +107,11 @@ public class GamePanel extends JPanel implements Runnable {
 	}
 
 	private void checkImpact() {
-		if(ballY >= (PHEIGHT-10)) {
+		if((ballY >= (PHEIGHT-10)) && (yEnergy > 0)) {
 			if(yEnergy >= minEnergyAtImpact) {
-				yEnergy = yEnergy * 0.80f;
-				yEnergy = yEnergy * -1;
+				System.out.println(yEnergy);
+				yEnergy = ((yEnergy * 0.80f) - 50) * -1;
+				System.out.println(yEnergy);
 			}
 			else {
 				yEnergy = 0;
