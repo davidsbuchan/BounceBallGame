@@ -18,13 +18,24 @@ public class GamePanel extends JPanel implements Runnable {
 	private Graphics dbg;
 	private Image dbImage = null;
 	
-	private volatile int ballX, ballY;
+	private int ballX, ballY;
+	private static final int SIZE = 10;
+	
+	// Added energy per second;
+	private static final float YFORCE = 400;
+	private float yEnergy;
+	private int yDirection;
+	private long currentTime;
+	private float elapsedTimeInSeconds;
+	private float minEnergyAtImpact = 10;
 	
 	public GamePanel() {
 		setBackground(Color.WHITE);
 		setPreferredSize(new Dimension(PWIDTH, PHEIGHT));
-		ballX = 0;
+		ballX = 250;
 		ballY = 0;
+		yEnergy = 0;
+		yDirection = 1;
 	}
 	
 	@Override
@@ -45,6 +56,7 @@ public class GamePanel extends JPanel implements Runnable {
 	@Override
 	public void run() {
 		running = true;
+		currentTime = System.nanoTime();
 		while(running) {
 			gameUpdate();
 			gameRender();
@@ -71,7 +83,7 @@ public class GamePanel extends JPanel implements Runnable {
 		dbg.fillRect(0, 0, PWIDTH, PHEIGHT);
 		
 		dbg.setColor(Color.red);
-		dbg.drawOval(ballX, ballY, 10, 10);
+		dbg.drawOval(ballX, ballY, SIZE, SIZE);
 		
 		if(gameOver) {
 			gameOverMessage(dbg);
@@ -84,11 +96,28 @@ public class GamePanel extends JPanel implements Runnable {
 
 	private void gameUpdate() {
 		if(!gameOver) {
-			ballX++;
-			ballY++;
+			elapsedTimeInSeconds = (System.nanoTime() - currentTime) / 1000000000f;
+			currentTime = System.nanoTime();
+			
+			yEnergy += (YFORCE * elapsedTimeInSeconds);
+			ballY += (yEnergy * elapsedTimeInSeconds);
+			
+			checkImpact();
 		}
 	}
-	
+
+	private void checkImpact() {
+		if(ballY >= (PHEIGHT-10)) {
+			if(yEnergy >= minEnergyAtImpact) {
+				yEnergy = yEnergy * 0.80f;
+				yEnergy = yEnergy * -1;
+			}
+			else {
+				yEnergy = 0;
+			}
+		}
+	}
+
 	@Override
 	protected void paintComponent(Graphics g) {
 		// TODO Auto-generated method stub
