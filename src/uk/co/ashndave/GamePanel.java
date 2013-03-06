@@ -24,11 +24,11 @@ public class GamePanel extends JPanel implements Runnable {
 	private static final int SIZE = 10;
 	
 	// Added energy per second;
-	private static final float YFORCE = 400;
+	private static final float YFORCE = 600;
 	private float yEnergy;
 	private long currentTime;
 	private float elapsedTimeInSeconds;
-	private float minEnergyAtImpact = 10;
+	private float minEnergyAtImpact = 60;
 	
 	public GamePanel() {
 		setBackground(Color.WHITE);
@@ -56,17 +56,27 @@ public class GamePanel extends JPanel implements Runnable {
 	
 	@Override
 	public void run() {
+		long beforeTime, timeDiff, sleepTime;
+		beforeTime = System.nanoTime();
+		long period = 10000000;
+		
 		running = true;
 		currentTime = System.nanoTime();
 		while(running) {
 			gameUpdate();
 			gameRender();
-
 			paintScreen();
 
+			timeDiff = System.nanoTime() - beforeTime;
+			sleepTime = period - timeDiff;
+			if(sleepTime <= 0) {
+				sleepTime = 0;
+			}
+			
 			try {
-				Thread.sleep(20);
+				Thread.sleep(sleepTime / 1000000);
 			}catch(InterruptedException ex){}
+			beforeTime = System.nanoTime();
 		}
 		System.exit(0);
 	}
@@ -119,19 +129,24 @@ public class GamePanel extends JPanel implements Runnable {
 			yEnergy += (YFORCE * elapsedTimeInSeconds);
 			ballY += (yEnergy * elapsedTimeInSeconds);
 			
+			//System.out.println(currentTime + ", " + yEnergy + ", " + ballY);
+			
 			checkImpact();
 		}
 	}
 
 	private void checkImpact() {
+		// If ball is touching the ground and
+		// if energy is pointing down (It's positive)
 		if((ballY >= (PHEIGHT-10)) && (yEnergy > 0)) {
 			if(yEnergy >= minEnergyAtImpact) {
-				System.out.println(yEnergy);
-				yEnergy = ((yEnergy * 0.80f) - 50) * -1;
-				System.out.println(yEnergy);
+				//System.out.println(yEnergy);
+				yEnergy = ((yEnergy * 0.80f) - 80) * -1;
+				//System.out.println(yEnergy);
 			}
 			else {
 				yEnergy = 0;
+				gameOver = true;
 			}
 		}
 	}
