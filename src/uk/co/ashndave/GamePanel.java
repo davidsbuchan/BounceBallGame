@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Toolkit;
 
 import javax.swing.JPanel;
 
@@ -60,12 +61,28 @@ public class GamePanel extends JPanel implements Runnable {
 		while(running) {
 			gameUpdate();
 			gameRender();
-			repaint();
+
+			paintScreen();
+
 			try {
 				Thread.sleep(20);
 			}catch(InterruptedException ex){}
 		}
 		System.exit(0);
+	}
+
+	private void paintScreen() {
+		Graphics g;
+		try {
+			g = this.getGraphics();
+			if((g != null) && (dbImage != null)) {
+				g.drawImage(dbImage, 0, 0, null);
+			}
+			Toolkit.getDefaultToolkit().sync();
+			g.dispose();
+		}catch(Exception ex) {
+			System.out.println("Failed on paintScreen: " + ex);
+		}
 	}
 
 	private void gameRender() {
