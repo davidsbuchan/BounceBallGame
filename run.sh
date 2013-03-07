@@ -1,4 +1,4 @@
 #!/bin/sh
 
 cd bin
-java uk.co.ashndave.Game
+java -jar Game.jar
