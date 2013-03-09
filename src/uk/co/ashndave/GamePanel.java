@@ -4,13 +4,20 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import javax.swing.JPanel;
 
+import java.lang.Object;
+
 public class GamePanel extends JPanel implements Runnable {
 	private static final int PWIDTH = 500;
-	private static final int PHEIGHT = 400;
+	private static final int PHEIGHT = 500;
 	
 	private Thread animator;
 	private volatile boolean running = false;
@@ -20,25 +27,75 @@ public class GamePanel extends JPanel implements Runnable {
 	private Image dbImage = null;
 	
 	private int ballX, ballY;
-	private float yMovement;
 	private static final int SIZE = 10;
+	private static final int HALFSIZE = SIZE / 2;
+	
+	private java.util.ArrayList<Bomb> bombs;
 	
 	// Added energy per second;
-	private static final float YFORCE = 600;
-	private float yEnergy;
+	private float YFORCE = 600;
+	private float XFORCE = 0;
+	private float yEnergy, xEnergy;
 	private long currentTime;
 	private float elapsedTimeInSeconds;
 	private float minEnergyAtImpact = 60;
+	
+	private volatile static Object BOMBSLOCKOBJECT = new Object();
 	
 	public GamePanel() {
 		setBackground(Color.WHITE);
 		setPreferredSize(new Dimension(PWIDTH, PHEIGHT));
 		ballX = 250;
 		ballY = 0;
-		yMovement = 0;
 		yEnergy = 0;
+		xEnergy = 0;
+		
+		bombs = new ArrayList<Bomb>();
+		
+		SetupPanelMouseListener();
+		
+		
 	}
 	
+	private void SetupPanelMouseListener() {
+		
+		this.addMouseListener(new MouseListener() {
+				
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				LayBomb(e);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+			}
+		});
+	}
+	
+	public void LayBomb(MouseEvent e) {
+		Bomb b = new Bomb(e.getX(), e.getY(), 100);
+		synchronized (BOMBSLOCKOBJECT) {
+			bombs.add(b);
+		}
+	}
+	
+
 	@Override
 	public void addNotify() {
 		// TODO Auto-generated method stub
@@ -112,6 +169,13 @@ public class GamePanel extends JPanel implements Runnable {
 		dbg.setColor(Color.red);
 		dbg.drawOval(ballX, ballY, SIZE, SIZE);
 		
+		dbg.setColor(Color.blue);
+		synchronized (BOMBSLOCKOBJECT) {
+			for(Bomb b : bombs) {
+				dbg.drawOval(b.getRenderX(), b.getRenderY(), b.getSize(), b.getSize());
+			}			
+		}
+		
 		if(gameOver) {
 			gameOverMessage(dbg);
 		}
@@ -129,24 +193,51 @@ public class GamePanel extends JPanel implements Runnable {
 			yEnergy += (YFORCE * elapsedTimeInSeconds);
 			ballY += (yEnergy * elapsedTimeInSeconds);
 			
-			//System.out.println(currentTime + ", " + yEnergy + ", " + ballY);
+			xEnergy += (XFORCE * elapsedTimeInSeconds);
+			ballX += (xEnergy * elapsedTimeInSeconds);
+			
+			if((yEnergy == 0) && (xEnergy == 0)) {
+				gameOver = true;
+			}
+			synchronized (BOMBSLOCKOBJECT) {
+				Iterator<Bomb> i = bombs.iterator();
+				while(i.hasNext()) {
+					Bomb b = i.next();
+					if(b.Age() > 1000000000l) {
+						i.remove();
+					}
+				}
+			}
 			
 			checkImpact();
 		}
 	}
 
 	private void checkImpact() {
+		checkImpactWall();
+		checkImpactBombs();
+	}
+
+	private void checkImpactBombs() {
+		synchronized (BOMBSLOCKOBJECT) {
+			Point ballMiddle = new Point(ballX + HALFSIZE, ballY + HALFSIZE);
+			for(Bomb b : bombs) {
+				
+			}
+		}
+	}
+
+	private void checkImpactWall() {
 		// If ball is touching the ground and
 		// if energy is pointing down (It's positive)
 		if((ballY >= (PHEIGHT-10)) && (yEnergy > 0)) {
 			if(yEnergy >= minEnergyAtImpact) {
-				//System.out.println(yEnergy);
 				yEnergy = ((yEnergy * 0.80f) - 80) * -1;
-				//System.out.println(yEnergy);
 			}
-			else {
-				yEnergy = 0;
-				gameOver = true;
+		}
+		if((ballX >= (PWIDTH-10)) && (xEnergy > 0)) {
+			if(xEnergy >= minEnergyAtImpact) {
+				xEnergy = ((xEnergy * 0.8f) - 80) * -1;
 			}
 		}
 	}
