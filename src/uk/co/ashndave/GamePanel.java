@@ -8,6 +8,10 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.Line2D.Double;
+import java.awt.geom.PathIterator;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -29,6 +33,8 @@ public class GamePanel extends JPanel implements Runnable {
 	private int ballX, ballY;
 	private static final int SIZE = 10;
 	private static final int HALFSIZE = SIZE / 2;
+	private static final int BOMBSIZE = 100;
+	private static final int MINDISTANCE = (SIZE + BOMBSIZE) / 2;
 	
 	private java.util.ArrayList<Bomb> bombs;
 	
@@ -51,6 +57,9 @@ public class GamePanel extends JPanel implements Runnable {
 		xEnergy = 0;
 		
 		bombs = new ArrayList<Bomb>();
+		
+		//Bomb onlyBomb = new Bomb(225, 300, 100);
+		//bombs.add(onlyBomb);
 		
 		SetupPanelMouseListener();
 		
@@ -89,7 +98,7 @@ public class GamePanel extends JPanel implements Runnable {
 	}
 	
 	public void LayBomb(MouseEvent e) {
-		Bomb b = new Bomb(e.getX(), e.getY(), 100);
+		Bomb b = new Bomb(e.getX(), e.getY(), BOMBSIZE);
 		synchronized (BOMBSLOCKOBJECT) {
 			bombs.add(b);
 		}
@@ -219,12 +228,42 @@ public class GamePanel extends JPanel implements Runnable {
 	}
 
 	private void checkImpactBombs() {
+		Point ballMiddle = new Point(ballX + HALFSIZE, ballY + HALFSIZE);
 		synchronized (BOMBSLOCKOBJECT) {
-			Point ballMiddle = new Point(ballX + HALFSIZE, ballY + HALFSIZE);
 			for(Bomb b : bombs) {
-				
+				Point bMid = b.getMidPoint();
+				//Math.sqrt(Math.pow((p2.getX() - p1.getX()), 2) + Math.pow((p2.getY() - p1.getY()), 2))
+				double distance = ballMiddle.distance(bMid.getX(), bMid.getY());
+				if(distance <= MINDISTANCE) {
+					
+					reactToImpactOfBomb(ballMiddle, b);
+					
+				}
 			}
 		}
+	}
+
+	private void reactToImpactOfBomb(Point ballMiddle, Bomb bomb) {
+		// travelling direction of ball
+		double ballTravellingDirectionBeforeImpact = Math.toDegrees(Math.atan(yEnergy / xEnergy));
+		double directionEnergy = Math.sqrt(Math.pow(yEnergy, 2) + Math.pow(xEnergy, 2));
+		
+		// perpendicular of "line from centre of bomb to centre of ball"
+		// opposite
+		int opposite = Math.abs(ballMiddle.y - bomb.getMiddleY());
+		int adjacent = Math.abs(ballMiddle.x - bomb.getMiddleX());
+		double angleOfLineBetweenCentres = Math.toDegrees(Math.atan(opposite / adjacent));
+		double perpendicular = (angleOfLineBetweenCentres + 90) % 360;
+		
+		double angleOfImpact = Math.abs(perpendicular - ballTravellingDirectionBeforeImpact);
+		double change = 180 - (angleOfImpact * 2);
+		double result = ballTravellingDirectionBeforeImpact + change;
+		
+		// Reduce directionEnergy at this point
+		directionEnergy = directionEnergy * 0.8;
+		
+		yEnergy = (float) (Math.sin(result) * directionEnergy);
+		xEnergy = (float) (Math.cos(result) * directionEnergy);
 	}
 
 	private void checkImpactWall() {
@@ -235,10 +274,11 @@ public class GamePanel extends JPanel implements Runnable {
 				yEnergy = ((yEnergy * 0.80f) - 80) * -1;
 			}
 		}
-		if((ballX >= (PWIDTH-10)) && (xEnergy > 0)) {
-			if(xEnergy >= minEnergyAtImpact) {
+		
+		if(((ballX >= (PWIDTH-10)) || (ballX <= 10)) && (Math.abs(xEnergy) > 0)) {
+			if(Math.abs(xEnergy) >= minEnergyAtImpact) {
 				xEnergy = ((xEnergy * 0.8f) - 80) * -1;
-			}
+			}			
 		}
 	}
 

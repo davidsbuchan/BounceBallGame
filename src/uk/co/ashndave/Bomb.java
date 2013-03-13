@@ -9,6 +9,7 @@ public class Bomb {
 	private int renderX, renderY;
 	
 	private int middleX, middleY; 
+	private Point midPoint;
 	
 	public Bomb(int x, int y, int size) {
 		this.x = x;
@@ -19,8 +20,9 @@ public class Bomb {
 		renderX = x - halfSize;
 		renderY = y - halfSize;
 		
-		middleX = x + halfSize;
-		middleY = y + halfSize;
+		middleX = renderX + halfSize;
+		middleY = renderY + halfSize;
+		midPoint = new Point(middleX, middleY);
 	}
 	
 	public int getX() {
@@ -53,6 +55,10 @@ public class Bomb {
 	
 	public int getMiddleY() {
 		return middleY;
+	}
+	
+	public Point getMidPoint() {
+		return midPoint;
 	}
 	
 	public long Age() {
