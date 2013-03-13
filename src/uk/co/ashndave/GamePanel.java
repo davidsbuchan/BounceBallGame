@@ -46,7 +46,11 @@ public class GamePanel extends JPanel implements Runnable {
 	private float elapsedTimeInSeconds;
 	private float minEnergyAtImpact = 60;
 	
+	private int lives = 3;
+	
 	private volatile static Object BOMBSLOCKOBJECT = new Object();
+	
+	private MouseListener mouseListenerHandle;
 	
 	public GamePanel() {
 		setBackground(Color.WHITE);
@@ -67,9 +71,7 @@ public class GamePanel extends JPanel implements Runnable {
 	}
 	
 	private void SetupPanelMouseListener() {
-		
-		this.addMouseListener(new MouseListener() {
-				
+		mouseListenerHandle = new MouseListener() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
 			}
@@ -94,7 +96,8 @@ public class GamePanel extends JPanel implements Runnable {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 			}
-		});
+		};
+		this.addMouseListener(mouseListenerHandle);
 	}
 	
 	public void LayBomb(MouseEvent e) {
@@ -172,8 +175,12 @@ public class GamePanel extends JPanel implements Runnable {
 				dbg = dbImage.getGraphics();
 			}
 		}
+		
 		dbg.setColor(Color.white);
 		dbg.fillRect(0, 0, PWIDTH, PHEIGHT);
+		
+		dbg.setColor(Color.darkGray);
+		dbg.drawString("Lives: " + lives, 20, 20);
 		
 		dbg.setColor(Color.red);
 		dbg.drawOval(ballX, ballY, SIZE, SIZE);
@@ -182,7 +189,7 @@ public class GamePanel extends JPanel implements Runnable {
 		synchronized (BOMBSLOCKOBJECT) {
 			for(Bomb b : bombs) {
 				dbg.drawOval(b.getRenderX(), b.getRenderY(), b.getSize(), b.getSize());
-			}			
+			}
 		}
 		
 		if(gameOver) {
@@ -191,7 +198,8 @@ public class GamePanel extends JPanel implements Runnable {
 	}
 
 	private void gameOverMessage(Graphics dbg2) {
-		dbg2.drawString("Game Over", 0, 0);
+		dbg2.setColor(Color.BLACK);
+		dbg2.drawString("Game Over", 200, 200);
 	}
 
 	private void gameUpdate() {
@@ -205,7 +213,7 @@ public class GamePanel extends JPanel implements Runnable {
 			xEnergy += (XFORCE * elapsedTimeInSeconds);
 			ballX += (xEnergy * elapsedTimeInSeconds);
 			
-			if((yEnergy == 0) && (xEnergy == 0)) {
+			if((lives == 0) || ((yEnergy == 0) && (xEnergy == 0))) {
 				gameOver = true;
 			}
 			synchronized (BOMBSLOCKOBJECT) {
@@ -220,6 +228,9 @@ public class GamePanel extends JPanel implements Runnable {
 			
 			checkImpact();
 		}
+		else {
+			this.removeMouseListener(mouseListenerHandle);
+		}
 	}
 
 	private void checkImpact() {
@@ -233,7 +244,7 @@ public class GamePanel extends JPanel implements Runnable {
 			for(Bomb b : bombs) {
 				Point bMid = b.getMidPoint();
 				//Math.sqrt(Math.pow((p2.getX() - p1.getX()), 2) + Math.pow((p2.getY() - p1.getY()), 2))
-				double distance = ballMiddle.distance(bMid.getX(), bMid.getY());
+				float distance = (float) ballMiddle.distance(bMid.getX(), bMid.getY());
 				if(distance <= MINDISTANCE) {
 					
 					reactToImpactOfBomb(ballMiddle, b);
@@ -245,31 +256,46 @@ public class GamePanel extends JPanel implements Runnable {
 
 	private void reactToImpactOfBomb(Point ballMiddle, Bomb bomb) {
 		// travelling direction of ball
-		double ballTravellingDirectionBeforeImpact = Math.toDegrees(Math.atan(yEnergy / xEnergy));
-		double directionEnergy = Math.sqrt(Math.pow(yEnergy, 2) + Math.pow(xEnergy, 2));
+		float ballTravellingDirectionBeforeImpact = getBallTravellingDirectionBeforeImpact();
+		float directionEnergy = (float) Math.sqrt(Math.pow(yEnergy, 2) + Math.pow(xEnergy, 2));
 		
 		// perpendicular of "line from centre of bomb to centre of ball"
 		// opposite
 		int opposite = Math.abs(ballMiddle.y - bomb.getMiddleY());
 		int adjacent = Math.abs(ballMiddle.x - bomb.getMiddleX());
-		double angleOfLineBetweenCentres = Math.toDegrees(Math.atan(opposite / adjacent));
-		double perpendicular = (angleOfLineBetweenCentres + 90) % 360;
+		float angleOfLineBetweenCentres = getAngleOfLineBetweenCentres(
+				opposite, adjacent);
+		float perpendicular = (angleOfLineBetweenCentres + 90) % 360;
 		
-		double angleOfImpact = Math.abs(perpendicular - ballTravellingDirectionBeforeImpact);
-		double change = 180 - (angleOfImpact * 2);
-		double result = ballTravellingDirectionBeforeImpact + change;
+		float angleOfImpact = Math.abs(perpendicular - ballTravellingDirectionBeforeImpact);
+		float change = 180 - (angleOfImpact * 2);
+		float result = ballTravellingDirectionBeforeImpact + change;
 		
 		// Reduce directionEnergy at this point
-		directionEnergy = directionEnergy * 0.8;
+		directionEnergy = directionEnergy * 0.8f;
 		
 		yEnergy = (float) (Math.sin(result) * directionEnergy);
 		xEnergy = (float) (Math.cos(result) * directionEnergy);
+	}
+
+	private float getAngleOfLineBetweenCentres(int opposite, int adjacent) {
+		if(adjacent == 0) {
+			adjacent = 1;
+		}
+		float angleOfLineBetweenCentres = (float) Math.toDegrees(Math.atan(opposite / adjacent));
+		return angleOfLineBetweenCentres;
+	}
+
+	private float getBallTravellingDirectionBeforeImpact() {
+		float ballTravellingDirectionBeforeImpact = (float) Math.toDegrees(Math.atan(yEnergy / xEnergy));
+		return ballTravellingDirectionBeforeImpact;
 	}
 
 	private void checkImpactWall() {
 		// If ball is touching the ground and
 		// if energy is pointing down (It's positive)
 		if((ballY >= (PHEIGHT-10)) && (yEnergy > 0)) {
+			lives--;
 			if(yEnergy >= minEnergyAtImpact) {
 				yEnergy = ((yEnergy * 0.80f) - 80) * -1;
 			}
