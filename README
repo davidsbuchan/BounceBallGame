@@ -1,0 +1,10 @@
+To run:
+Either double click on Game.java or
+On Linux:
+make run.sh executable
+type ./run.sh
+
+The object of the game:
+To keep the ball from hitting the ground.
+
+Have fun.
