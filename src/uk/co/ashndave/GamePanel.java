@@ -6,6 +6,8 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Ellipse2D;
@@ -24,8 +26,10 @@ public class GamePanel extends JPanel implements Runnable {
 	private static final int PHEIGHT = 500;
 	
 	private Thread animator;
-	private volatile boolean running = false;
-	private volatile boolean gameOver = false;
+	private boolean running = false;
+	private boolean gameOver = false;
+	private boolean hasStarted = false;
+	private long timeStartedWaitingAtStart = -1;
 	
 	private Graphics dbg;
 	private Image dbImage = null;
@@ -61,15 +65,40 @@ public class GamePanel extends JPanel implements Runnable {
 		xEnergy = 0;
 		
 		bombs = new ArrayList<Bomb>();
-		
-		//Bomb onlyBomb = new Bomb(225, 300, 100);
-		//bombs.add(onlyBomb);
-		
+		this.setFocusable(true);
+		this.requestFocusInWindow();
 		SetupPanelMouseListener();
-		
-		
+		SetupPanelKeyboardListener();
 	}
 	
+	private void SetupPanelKeyboardListener() {
+		this.addKeyListener(new KeyListener() {
+			
+			@Override
+			public void keyTyped(KeyEvent arg0) {
+				if(gameOver) {
+					if(arg0.getKeyChar() == 'y') {
+						gameOver = false;
+						hasStarted = false;
+						lives = 3;
+						ballX = 250;
+						ballY = 0;
+						timeStartedWaitingAtStart = -1;
+					}
+				}
+			}
+			
+			@Override
+			public void keyReleased(KeyEvent arg0) {
+			}
+			
+			@Override
+			public void keyPressed(KeyEvent arg0) {
+				
+			}
+		});
+	}
+
 	private void SetupPanelMouseListener() {
 		mouseListenerHandle = new MouseListener() {
 			@Override
@@ -107,7 +136,6 @@ public class GamePanel extends JPanel implements Runnable {
 		}
 	}
 	
-
 	@Override
 	public void addNotify() {
 		// TODO Auto-generated method stub
@@ -130,7 +158,6 @@ public class GamePanel extends JPanel implements Runnable {
 		long period = 10000000;
 		
 		running = true;
-		currentTime = System.nanoTime();
 		while(running) {
 			gameUpdate();
 			gameRender();
@@ -179,31 +206,60 @@ public class GamePanel extends JPanel implements Runnable {
 		dbg.setColor(Color.white);
 		dbg.fillRect(0, 0, PWIDTH, PHEIGHT);
 		
-		dbg.setColor(Color.darkGray);
-		dbg.drawString("Lives: " + lives, 20, 20);
-		
-		dbg.setColor(Color.red);
-		dbg.drawOval(ballX, ballY, SIZE, SIZE);
-		
-		dbg.setColor(Color.blue);
-		synchronized (BOMBSLOCKOBJECT) {
-			for(Bomb b : bombs) {
-				dbg.drawOval(b.getRenderX(), b.getRenderY(), b.getSize(), b.getSize());
+		if(hasStarted)
+		{
+			dbg.setColor(Color.darkGray);
+			dbg.drawString("Lives: " + lives, 20, 20);
+			dbg.setColor(Color.red);
+			dbg.drawOval(ballX, ballY, SIZE, SIZE);
+			
+			dbg.setColor(Color.blue);
+			synchronized (BOMBSLOCKOBJECT) {
+				for(Bomb b : bombs) {
+					dbg.drawOval(b.getRenderX(), b.getRenderY(), b.getSize(), b.getSize());
+				}
 			}
-		}
-		
-		if(gameOver) {
-			gameOverMessage(dbg);
+			
+			if(gameOver) {
+				gameOverMessage(dbg);
+			}
+		} else {
+			if(timeStartedWaitingAtStart == -1) {
+				// we've just started waiting.
+				timeStartedWaitingAtStart = System.nanoTime();
+			}
+			long length = System.nanoTime() - timeStartedWaitingAtStart;
+			if(length > 3000000000l) {
+				hasStarted = true;
+				currentTime = System.nanoTime();
+			}
+			dbg.setColor(Color.red);
+			double rnd = Math.random();
+			int x = 200;
+			int y = 200;
+			if((rnd >=0) && (rnd<0.25)) {
+				x = 201;
+			}else if((rnd >=0.25) && (rnd<0.5)) {
+				x = 199;
+			} else if((rnd >=0.5) && (rnd<0.75)) {
+				y = 201;
+			} else {
+				y = 199;
+			}
+			dbg.drawString("Let's get ready to RUMBLE.", x, y);
+			long left = 3 - (length / 1000000000);
+			dbg.drawString(left + "", 200, 220);
 		}
 	}
 
 	private void gameOverMessage(Graphics dbg2) {
 		dbg2.setColor(Color.BLACK);
 		dbg2.drawString("Game Over", 200, 200);
+		dbg2.drawString("Press 'y' to restart", 200, 210);
 	}
 
 	private void gameUpdate() {
-		if(!gameOver) {
+		if((!gameOver) && (hasStarted)) {
 			elapsedTimeInSeconds = (System.nanoTime() - currentTime) / 1000000000f;
 			currentTime = System.nanoTime();
 			
@@ -227,9 +283,6 @@ public class GamePanel extends JPanel implements Runnable {
 			}
 			
 			checkImpact();
-		}
-		else {
-			this.removeMouseListener(mouseListenerHandle);
 		}
 	}
 
