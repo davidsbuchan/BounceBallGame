@@ -19,9 +19,9 @@ package uk.co.ashndave;
 import java.awt.Point;
 
 public class Bomb {
-
-	public static final int MAXSIZE = 100;
 	
+	public static final float INITIALENERGY = 1000000000;
+		
 	private int x, y;
 	private long born;
 	private Point midPoint;
@@ -74,5 +74,11 @@ public class Bomb {
 	
 	public long Age() {
 		return System.nanoTime() - born;
+	}
+	
+	public float CurrentEnergy() {
+		float currentEnergy = INITIALENERGY / Age();
+		System.out.println(currentEnergy);
+		return currentEnergy;
 	}
 }

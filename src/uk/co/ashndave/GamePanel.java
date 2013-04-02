@@ -342,7 +342,7 @@ public class GamePanel extends JPanel implements Runnable {
 		float result = ballTravellingDirectionBeforeImpact + change;
 		
 		// Reduce directionEnergy at this point
-		directionEnergy = directionEnergy * 0.8f;
+		directionEnergy = directionEnergy * bomb.CurrentEnergy();
 		
 		yEnergy = (float) (Math.sin(result) * directionEnergy);
 		xEnergy = (float) (Math.cos(result) * directionEnergy);
