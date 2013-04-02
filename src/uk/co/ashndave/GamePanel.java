@@ -54,8 +54,6 @@ public class GamePanel extends JPanel implements Runnable {
 	private int ballX, ballY;
 	private static final int SIZE = 10;
 	private static final int HALFSIZE = SIZE / 2;
-	private static final int BOMBSIZE = 100;
-	private static final int MINDISTANCE = (SIZE + BOMBSIZE) / 2;
 	
 	private java.util.ArrayList<Bomb> bombs;
 	
@@ -147,7 +145,7 @@ public class GamePanel extends JPanel implements Runnable {
 	}
 	
 	public void LayBomb(MouseEvent e) {
-		Bomb b = new Bomb(e.getX(), e.getY(), BOMBSIZE);
+		Bomb b = new Bomb(e.getX(), e.getY());
 		synchronized (BOMBSLOCKOBJECT) {
 			bombs.add(b);
 		}
@@ -233,7 +231,8 @@ public class GamePanel extends JPanel implements Runnable {
 			dbg.setColor(Color.blue);
 			synchronized (BOMBSLOCKOBJECT) {
 				for(Bomb b : bombs) {
-					dbg.drawOval(b.getRenderX(), b.getRenderY(), b.getSize(), b.getSize());
+					int currentSize = b.getSize();
+					dbg.drawOval(b.getRenderX(currentSize), b.getRenderY(currentSize), currentSize, currentSize);
 				}
 			}
 			
@@ -313,9 +312,10 @@ public class GamePanel extends JPanel implements Runnable {
 		synchronized (BOMBSLOCKOBJECT) {
 			for(Bomb b : bombs) {
 				Point bMid = b.getMidPoint();
+				float minDistance = (b.getSize() / 2) + 5;
 				//Math.sqrt(Math.pow((p2.getX() - p1.getX()), 2) + Math.pow((p2.getY() - p1.getY()), 2))
 				float distance = (float) ballMiddle.distance(bMid.getX(), bMid.getY());
-				if(distance <= MINDISTANCE) {
+				if(distance <= minDistance) {
 					
 					reactToImpactOfBomb(ballMiddle, b);
 					

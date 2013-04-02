@@ -20,25 +20,17 @@ import java.awt.Point;
 
 public class Bomb {
 
-	private int x, y, size;
-	private long born;
-	private int renderX, renderY;
+	public static final int MAXSIZE = 100;
 	
-	private int middleX, middleY; 
+	private int x, y;
+	private long born;
 	private Point midPoint;
 	
-	public Bomb(int x, int y, int size) {
+	public Bomb(int x, int y) {
 		this.x = x;
 		this.y = y;
-		this.size = size;
+		midPoint = new Point(x, y);
 		born = System.nanoTime();
-		int halfSize = size / 2;
-		renderX = x - halfSize;
-		renderY = y - halfSize;
-		
-		middleX = renderX + halfSize;
-		middleY = renderY + halfSize;
-		midPoint = new Point(middleX, middleY);
 	}
 	
 	public int getX() {
@@ -50,27 +42,30 @@ public class Bomb {
 	}
 	
 	public int getSize() {
-		return size;
+		int currentSize = (int)Age() / 10000000;
+		return currentSize;
 	}
 	
 	public long Born() {
 		return born;
 	}
 	
-	public int getRenderX() {
+	public int getRenderX(int currentSize) {
+		int renderX = x - (currentSize / 2);
 		return renderX;
 	}
 	
-	public int getRenderY() {
+	public int getRenderY(int currentSize) {
+		int renderY = y - (currentSize / 2);
 		return renderY;
 	}
 	
 	public int getMiddleX() {
-		return middleX;
+		return x;
 	}
 	
 	public int getMiddleY() {
-		return middleY;
+		return y;
 	}
 	
 	public Point getMidPoint() {
