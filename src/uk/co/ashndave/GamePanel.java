@@ -68,6 +68,8 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 	
 	private MouseListener mouseListenerHandle;
 	
+	private int score = 0;
+	
 	public GamePanel() {
 		setBackground(Color.WHITE);
 		setPreferredSize(new Dimension(PWIDTH, PHEIGHT));
@@ -95,6 +97,9 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 						lives = 3;
 						ballX = 250;
 						ballY = 0;
+						xEnergy = 0;
+						yEnergy = 0;
+						score = 0;
 						timeStartedWaitingAtStart = -1;
 					}
 				}
@@ -178,6 +183,7 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 		{
 			dbg.setColor(Color.darkGray);
 			dbg.drawString("Lives: " + lives, 20, 20);
+			dbg.drawString("Score: " + score, 400, 20);
 			dbg.setColor(Color.red);
 			dbg.drawOval(ballX, ballY, SIZE, SIZE);
 			
@@ -272,12 +278,16 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 				//Math.sqrt(Math.pow((p2.getX() - p1.getX()), 2) + Math.pow((p2.getY() - p1.getY()), 2))
 				float distance = (float) ballMiddle.distance(bMid.getX(), bMid.getY());
 				if(distance <= minDistance) {
-					
+					incrementScore();
 					reactToImpactOfBomb(ballMiddle, b);
 					
 				}
 			}
 		}
+	}
+
+	private void incrementScore() {
+		score++;
 	}
 
 	private void reactToImpactOfBomb(Point ballMiddle, Bomb bomb) {
