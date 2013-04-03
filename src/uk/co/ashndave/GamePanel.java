@@ -185,7 +185,14 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 			dbg.drawString("Lives: " + lives, 20, 20);
 			dbg.drawString("Score: " + score, 400, 20);
 			dbg.setColor(Color.red);
-			dbg.drawOval(ballX, ballY, SIZE, SIZE);
+			if(ballY < 0) {
+				// ball is too high and off the screen
+				// draw a marker at top of screen showing x position
+				dbg.drawString("^", ballX, 10);
+			}
+			else {
+				dbg.drawOval(ballX, ballY, SIZE, SIZE);
+			}
 			
 			dbg.setColor(Color.blue);
 			synchronized (BOMBSLOCKOBJECT) {

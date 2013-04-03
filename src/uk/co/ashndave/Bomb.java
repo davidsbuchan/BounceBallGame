@@ -20,7 +20,7 @@ import java.awt.Point;
 
 public class Bomb {
 	
-	public static final float INITIALENERGY = 1000000000;
+	public static final float INITIALENERGY = 500000000;
 		
 	private int x, y;
 	private long born;
@@ -78,7 +78,6 @@ public class Bomb {
 	
 	public float CurrentEnergy() {
 		float currentEnergy = INITIALENERGY / Age();
-		System.out.println(currentEnergy);
 		return currentEnergy;
 	}
 }
