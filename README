@@ -1,5 +1,15 @@
+To Compile
+mkdir bin
+cd build
+make all
+
+This will compile everything in bin from the root
+
+Or if you don't have make installed open the Makefile in the build directory and manually
+type the commands
+
 To run:
-Either double click on Game.java or
+Either double click on KeepyUppy.jar or
 On Linux:
 make run.sh executable
 type ./run.sh
