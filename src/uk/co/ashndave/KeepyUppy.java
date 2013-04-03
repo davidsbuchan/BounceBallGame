@@ -19,7 +19,11 @@ package uk.co.ashndave;
 
 import javax.swing.JFrame;
 
-public class Game {
+import uk.co.ashndave.game.GameLoop;
+import uk.co.ashndave.game.Renderable;
+import uk.co.ashndave.game.Updateable;
+
+public class KeepyUppy {
 
 	private static final String BriefLicence1 = "Copyright (C) 2013 David Strachan Buchan.";
 	private static final String BriefLicence2 = "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.";
@@ -29,16 +33,21 @@ public class Game {
 	
 	private static final String[] BriefLicence = new String[]{BriefLicence1, BriefLicence2,BriefLicence3,BriefLicence4,BriefLicence5};
 	
+	private Thread animator;
+	private GameLoop looper;
+	private GamePanel gamePanel;
+	private static KeepyUppy game;
+	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		
 		printLicence();
-		
+		game = new KeepyUppy();
 		javax.swing.SwingUtilities.invokeLater(new Runnable(){
 			public void run(){
-				createAndShowGUI();
+				game.createAndShowGUI();
 			}
 		});
 	}
@@ -49,12 +58,17 @@ public class Game {
 		}
 	}
 
-	protected static void createAndShowGUI() {
+	protected void createAndShowGUI() {
+		gamePanel = new GamePanel();
+		looper = new GameLoop(gamePanel, gamePanel);
 		JFrame frame = new JFrame("Game");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.add(new GamePanel());
+		frame.add(gamePanel);
 		frame.pack();
 		frame.setVisible(true);
+		
+		animator = new Thread(looper);
+		animator.start();
 	}
 
 }

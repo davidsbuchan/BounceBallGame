@@ -27,23 +27,20 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
-import java.awt.geom.Line2D.Double;
-import java.awt.geom.PathIterator;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.swing.JPanel;
 
+import uk.co.ashndave.game.Renderable;
+import uk.co.ashndave.game.Updateable;
+
 import java.lang.Object;
 
-public class GamePanel extends JPanel implements Runnable {
+public class GamePanel extends JPanel implements Updateable, Renderable {
 	private static final int PWIDTH = 500;
 	private static final int PHEIGHT = 500;
 	
-	private Thread animator;
-	private boolean running = false;
 	private boolean gameOver = false;
 	private boolean hasStarted = false;
 	private long timeStartedWaitingAtStart = -1;
@@ -122,14 +119,10 @@ public class GamePanel extends JPanel implements Runnable {
 
 			@Override
 			public void mouseEntered(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
 			}
 
 			@Override
 			public void mouseExited(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
 			}
 
 			@Override
@@ -150,47 +143,6 @@ public class GamePanel extends JPanel implements Runnable {
 			bombs.add(b);
 		}
 	}
-	
-	@Override
-	public void addNotify() {
-		// TODO Auto-generated method stub
-		super.addNotify();
-		startGame();
-	}
-
-	private void startGame() {
-		
-		if(animator == null || !running) {
-			animator = new Thread(this);
-			animator.start();
-		}
-	}
-	
-	@Override
-	public void run() {
-		long beforeTime, timeDiff, sleepTime;
-		beforeTime = System.nanoTime();
-		long period = 10000000;
-		
-		running = true;
-		while(running) {
-			gameUpdate();
-			gameRender();
-			paintScreen();
-
-			timeDiff = System.nanoTime() - beforeTime;
-			sleepTime = period - timeDiff;
-			if(sleepTime <= 0) {
-				sleepTime = 0;
-			}
-			
-			try {
-				Thread.sleep(sleepTime / 1000000);
-			}catch(InterruptedException ex){}
-			beforeTime = System.nanoTime();
-		}
-		System.exit(0);
-	}
 
 	private void paintScreen() {
 		Graphics g;
@@ -206,7 +158,8 @@ public class GamePanel extends JPanel implements Runnable {
 		}
 	}
 
-	private void gameRender() {
+	@Override
+	public void gameRender() {
 		if(dbImage == null) {
 			dbImage = createImage(PWIDTH, PHEIGHT);
 			if(dbImage == null){
@@ -266,6 +219,8 @@ public class GamePanel extends JPanel implements Runnable {
 			long left = 3 - (length / 1000000000);
 			dbg.drawString(left + "", 200, 220);
 		}
+		
+		paintScreen();
 	}
 
 	private void gameOverMessage(Graphics dbg2) {
@@ -274,7 +229,8 @@ public class GamePanel extends JPanel implements Runnable {
 		dbg2.drawString("Press 'y' to restart", 200, 210);
 	}
 
-	private void gameUpdate() {
+	@Override
+	public void gameUpdate() {
 		if((!gameOver) && (hasStarted)) {
 			elapsedTimeInSeconds = (System.nanoTime() - currentTime) / 1000000000f;
 			currentTime = System.nanoTime();
@@ -380,7 +336,6 @@ public class GamePanel extends JPanel implements Runnable {
 
 	@Override
 	protected void paintComponent(Graphics g) {
-		// TODO Auto-generated method stub
 		super.paintComponent(g);
 		if(dbImage != null) {
 			g.drawImage(dbImage, 0, 0, null);
