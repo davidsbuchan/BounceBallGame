@@ -78,6 +78,7 @@ public class Bomb {
 	
 	public float CurrentEnergy() {
 		float currentEnergy = INITIALENERGY / Age();
+		currentEnergy = (currentEnergy > 2) ? 2 : currentEnergy;
 		return currentEnergy;
 	}
 }
