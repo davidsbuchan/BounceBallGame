@@ -43,7 +43,22 @@ public class AngleTest {
 
 	@Test
 	public void TestAngleOfLineBetweenCentres() {
+		int[] ballXs = new int[]{15, 20, 25, 20, 15, 10, 5, 10};
+		int[] ballYs = new int[]{5, 10, 15, 20, 25, 20, 15, 10};
 		
+		int bombX = 15;
+		int bombY = 15;
+		
+		int opposite, adjacent;
+		
+		GamePanel.class.getDeclaredMethod("getAngleOfLineBetweenCentres", parameterTypes)
+		
+		for(int x=0; x<ballXs.length; x++) {
+			for(int y=0; y<ballYs.length; y++) {
+				opposite = Math.abs(ballXs[x] - bombX);
+				adjacent = Math.abs(ballYs[y] - bombY);
+			}
+		}
 	}
 	
 	
