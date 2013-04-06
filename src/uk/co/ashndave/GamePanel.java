@@ -32,6 +32,8 @@ import java.util.Iterator;
 
 import javax.swing.JPanel;
 
+import org.w3c.dom.NamedNodeMap;
+
 import uk.co.ashndave.game.Renderable;
 import uk.co.ashndave.game.Updateable;
 
@@ -284,7 +286,8 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 				float minDistance = (b.getSize() / 2) + 5;
 				//Math.sqrt(Math.pow((p2.getX() - p1.getX()), 2) + Math.pow((p2.getY() - p1.getY()), 2))
 				float distance = (float) ballMiddle.distance(bMid.getX(), bMid.getY());
-				if(distance <= minDistance) {
+				if((distance <= minDistance) && (distance <= b.getPreviousImpactDistance())){
+					b.setPreviousImpactDistance(distance);
 					incrementScore();
 					reactToImpactOfBomb(ballMiddle, b);
 					
@@ -323,9 +326,11 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 
 	private float getAngleOfLineBetweenCentres(int opposite, int adjacent) {
 		if(adjacent == 0) {
-			adjacent = 1;
+			return 90;
 		}
+		
 		float angleOfLineBetweenCentres = (float) Math.toDegrees(Math.atan(opposite / adjacent));
+			
 		return angleOfLineBetweenCentres;
 	}
 

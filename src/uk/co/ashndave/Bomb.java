@@ -25,6 +25,7 @@ public class Bomb {
 	private int x, y;
 	private long born;
 	private Point midPoint;
+	private float previousImpactDistance = Float.MAX_VALUE;
 	
 	public Bomb(int x, int y) {
 		this.x = x;
@@ -72,6 +73,12 @@ public class Bomb {
 		return midPoint;
 	}
 	
+	public float getPreviousImpactDistance() {
+		return previousImpactDistance;
+	}
+	public void setPreviousImpactDistance(float previousImpactDistance) {
+		this.previousImpactDistance = previousImpactDistance;
+	}
 	public long Age() {
 		return System.nanoTime() - born;
 	}
