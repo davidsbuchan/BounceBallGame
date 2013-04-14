@@ -18,4 +18,4 @@
 #along with BounceBallGame.  If not, see <http://www.gnu.org/licenses/>.
 
 cd bin
-java -jar Game.jar
+java -jar KeepyUppy.jar

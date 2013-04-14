@@ -18,10 +18,10 @@ all: clean Jarrify
 
 BuildGame:
 	javac -d ../bin ../src/uk/co/ashndave/game/Updateable.java ../src/uk/co/ashndave/game/Renderable.java ../src/uk/co/ashndave/game/GameLoop.java
-	javac -d ../bin ../src/uk/co/ashndave/Bomb.java ../src/uk/co/ashndave/GamePanel.java ../src/uk/co/ashndave/KeepyUppy.java
+	javac -d ../bin -cp ../bin ../src/uk/co/ashndave/Bomb.java ../src/uk/co/ashndave/GamePanel.java ../src/uk/co/ashndave/KeepyUppy.java
 
 Jarrify: BuildGame 
-	(cd ../bin; jar -cvfe Game.jar uk.co.ashndave.Game uk/co/ashndave/Game* uk/co/ashndave/Bomb.class)
+	(cd ../bin; jar -cvfe KeepyUppy.jar uk.co.ashndave.KeepyUppy uk/co/ashndave/game/*.class uk/co/ashndave/*.class)
 
 clean:
 	rm -rf ../bin/* 
