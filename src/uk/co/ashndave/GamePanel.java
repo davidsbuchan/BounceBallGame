@@ -27,6 +27,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -51,6 +52,7 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 	private Image dbImage = null;
 	
 	private int ballX, ballY;
+	private Point previousPositionOfBall;
 	private static final int SIZE = 10;
 	private static final int HALFSIZE = SIZE / 2;
 	
@@ -79,7 +81,7 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 		ballY = 0;
 		yEnergy = 0;
 		xEnergy = 0;
-		
+		previousPositionOfBall = new Point();
 		bombs = new ArrayList<Bomb>();
 		this.setFocusable(true);
 		this.requestFocusInWindow();
@@ -249,7 +251,8 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 		if((!gameOver) && (hasStarted)) {
 			elapsedTimeInSeconds = (System.nanoTime() - currentTime) / 1000000000f;
 			currentTime = System.nanoTime();
-			
+			previousPositionOfBall.x = ballX;
+			previousPositionOfBall.y = ballY;
 			yEnergy += (YFORCE * elapsedTimeInSeconds);
 			ballY += (yEnergy * elapsedTimeInSeconds);
 			
@@ -301,42 +304,41 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 	}
 
 	private void reactToImpactOfBomb(Point ballMiddle, Bomb bomb) {
-		// travelling direction of ball
-		float ballTravellingDirectionBeforeImpact = getBallTravellingDirectionBeforeImpact();
-		float directionEnergy = (float) Math.sqrt(Math.pow(yEnergy, 2) + Math.pow(xEnergy, 2));
-		
-		// perpendicular of "line from centre of bomb to centre of ball"
-		// opposite
-		int opposite = Math.abs(ballMiddle.y - bomb.getMiddleY());
-		int adjacent = Math.abs(ballMiddle.x - bomb.getMiddleX());
-		float angleOfLineBetweenCentres = getAngleOfLineBetweenCentres(
-				opposite, adjacent);
-		float perpendicular = (angleOfLineBetweenCentres + 90) % 360;
-		
-		float angleOfImpact = Math.abs(perpendicular - ballTravellingDirectionBeforeImpact);
-		float change = 180 - (angleOfImpact * 2);
-		float result = ballTravellingDirectionBeforeImpact + change;
-		
-		// Reduce directionEnergy at this point
-		directionEnergy = directionEnergy * bomb.CurrentEnergy();
-		
-		yEnergy = (float) (Math.sin(result) * directionEnergy);
-		xEnergy = (float) (Math.cos(result) * directionEnergy);
-	}
+		// the cosine rule bit
+		// point 1 is the centre of the bomb
+		// point 2 is the centre of the ball
+		// point 3 is where the centre of the ball was. We can work this out because we have the
+		// x and y direction the ball was travelling.
+		//Point previousPos = new Point((int)(ballMiddle.x - previousPositionOfBall.x), (int)(ballMiddle.y - previousPositionOfBall.y));
 
-	private float getAngleOfLineBetweenCentres(int opposite, int adjacent) {
-		if(adjacent == 0) {
-			return 90;
+		double ballPrevPDist = ballMiddle.distance(previousPositionOfBall.x, previousPositionOfBall.y);
+		double bombBallDist = bomb.getMidPoint().distance(ballMiddle.x, ballMiddle.y);
+		double bombPrevPDist = bomb.getMidPoint().distance(previousPositionOfBall.x, previousPositionOfBall.y);
+		
+		double cosAngleAtImpact = (Math.pow(ballPrevPDist, 2) + Math.pow(bombBallDist, 2) - Math.pow(bombPrevPDist, 2)) / 
+				(2 * ballPrevPDist * bombBallDist);
+		double angleAtImpact = Math.acos(cosAngleAtImpact);
+		
+		int orientation = Line2D.relativeCCW(bomb.getMiddleX(), bomb.getMiddleY(), ballMiddle.x, ballMiddle.y, previousPositionOfBall.x, previousPositionOfBall.y);
+		Point newBallPos = new Point(previousPositionOfBall.x - ballMiddle.x, previousPositionOfBall.y - ballMiddle.y);
+		double rotateAngle = angleAtImpact * 2;
+		double newBallPosX, newBallPosY;
+		
+		// apply rotation
+		if(orientation >= 0) {
+			newBallPosX = (newBallPos.x * Math.cos(rotateAngle)) + (newBallPos.y * Math.sin(rotateAngle));
+			newBallPosY = (newBallPos.y * Math.cos(rotateAngle)) - (newBallPos.x * Math.sin(rotateAngle));
+		} else {
+			newBallPosX = (newBallPos.x * Math.cos(rotateAngle)) - (newBallPos.y * Math.sin(rotateAngle));
+			newBallPosY = (newBallPos.y * Math.cos(rotateAngle)) + (newBallPos.x * Math.sin(rotateAngle));			
 		}
 		
-		float angleOfLineBetweenCentres = (float) Math.toDegrees(Math.atan(opposite / adjacent));
-			
-		return angleOfLineBetweenCentres;
-	}
-
-	private float getBallTravellingDirectionBeforeImpact() {
-		float ballTravellingDirectionBeforeImpact = (float) Math.toDegrees(Math.atan(yEnergy / xEnergy));
-		return ballTravellingDirectionBeforeImpact;
+		// transform back after rotation
+		ballX = (int) newBallPosX + ballMiddle.x;
+		ballY = (int) newBallPosY + ballMiddle.y;
+		
+		// change energies
+		
 	}
 
 	private void checkImpactWall() {
