@@ -253,10 +253,17 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 			currentTime = System.nanoTime();
 			previousPositionOfBall.x = ballX;
 			previousPositionOfBall.y = ballY;
-			yEnergy += (YFORCE * elapsedTimeInSeconds);
-			ballY += (yEnergy * elapsedTimeInSeconds);
 			
+			yEnergy += (YFORCE * elapsedTimeInSeconds);
 			xEnergy += (XFORCE * elapsedTimeInSeconds);
+			// make sure ball isn't going too fast.
+			float zEnergy = (float) Math.sqrt(Math.pow(yEnergy,2) + Math.pow(xEnergy, 2));
+			if(zEnergy > 800) {
+				yEnergy = (yEnergy / zEnergy) * 800;
+				xEnergy = (xEnergy / zEnergy) * 800;
+			}
+			
+			ballY += (yEnergy * elapsedTimeInSeconds);			
 			ballX += (xEnergy * elapsedTimeInSeconds);
 			
 			if((lives == 0) || ((yEnergy == 0) && (xEnergy == 0))) {
@@ -287,7 +294,6 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 			for(Bomb b : bombs) {
 				Point bMid = b.getMidPoint();
 				float minDistance = (b.getSize() / 2) + 5;
-				//Math.sqrt(Math.pow((p2.getX() - p1.getX()), 2) + Math.pow((p2.getY() - p1.getY()), 2))
 				float distance = (float) ballMiddle.distance(bMid.getX(), bMid.getY());
 				if((distance <= minDistance) && (distance <= b.getPreviousImpactDistance())){
 					b.setPreviousImpactDistance(distance);
@@ -312,6 +318,7 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 		//Point previousPos = new Point((int)(ballMiddle.x - previousPositionOfBall.x), (int)(ballMiddle.y - previousPositionOfBall.y));
 
 		double ballPrevPDist = ballMiddle.distance(previousPositionOfBall.x, previousPositionOfBall.y);
+		//double ballPrevPDist = ballMiddle.distance(xEnergy, yEnergy);
 		double bombBallDist = bomb.getMidPoint().distance(ballMiddle.x, ballMiddle.y);
 		double bombPrevPDist = bomb.getMidPoint().distance(previousPositionOfBall.x, previousPositionOfBall.y);
 		
@@ -320,10 +327,10 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 		double angleAtImpact = Math.acos(cosAngleAtImpact);
 		
 		int orientation = Line2D.relativeCCW(bomb.getMiddleX(), bomb.getMiddleY(), ballMiddle.x, ballMiddle.y, previousPositionOfBall.x, previousPositionOfBall.y);
-		Point newBallPos = new Point(previousPositionOfBall.x - ballMiddle.x, previousPositionOfBall.y - ballMiddle.y);
-		double rotateAngle = angleAtImpact * 2;
+		Point newBallPos = new Point((int)(previousPositionOfBall.x - ballMiddle.x), (int)(previousPositionOfBall.y - ballMiddle.y));
+		double rotateAngle = (angleAtImpact * 2) + 3.142;
 		double newBallPosX, newBallPosY;
-		
+		//double rad = Math.toRadians(rotateAngle);
 		// apply rotation
 		if(orientation >= 0) {
 			newBallPosX = (newBallPos.x * Math.cos(rotateAngle)) + (newBallPos.y * Math.sin(rotateAngle));
@@ -333,9 +340,16 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 			newBallPosY = (newBallPos.y * Math.cos(rotateAngle)) + (newBallPos.x * Math.sin(rotateAngle));			
 		}
 		
+		xEnergy = (float) newBallPosX / elapsedTimeInSeconds;
+		yEnergy = (float) newBallPosY / elapsedTimeInSeconds;
+		
 		// transform back after rotation
-		ballX = (int) newBallPosX + ballMiddle.x;
-		ballY = (int) newBallPosY + ballMiddle.y;
+		//xEnergy = (float) ((newBallPosX + ballMiddle.x) * elapsedTimeInSeconds);
+		//yEnergy = (float) ((newBallPosY + ballMiddle.y) * elapsedTimeInSeconds);
+		//xEnergy = (float) (newBallPosX + (XFORCE * elapsedTimeInSeconds));
+		//yEnergy = (float) (newBallPosY + (YFORCE * elapsedTimeInSeconds));
+		//ballX = (int) newBallPosX + ballMiddle.x;
+		//ballY = (int) newBallPosY + ballMiddle.y;
 		
 		// change energies
 		

@@ -43,9 +43,8 @@ public class Bomb {
 	}
 	
 	public int getSize() {
-		//int currentSize = (int)Age() / 10000000;
-		//return currentSize;
-		return 100;
+		int currentSize = (int)Age() / 10000000;
+		return currentSize;
 	}
 	
 	public long Born() {
