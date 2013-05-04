@@ -313,12 +313,8 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 		// the cosine rule bit
 		// point 1 is the centre of the bomb
 		// point 2 is the centre of the ball
-		// point 3 is where the centre of the ball was. We can work this out because we have the
-		// x and y direction the ball was travelling.
-		//Point previousPos = new Point((int)(ballMiddle.x - previousPositionOfBall.x), (int)(ballMiddle.y - previousPositionOfBall.y));
-
+		// point 3 is where the centre of the ball was.
 		double ballPrevPDist = ballMiddle.distance(previousPositionOfBall.x, previousPositionOfBall.y);
-		//double ballPrevPDist = ballMiddle.distance(xEnergy, yEnergy);
 		double bombBallDist = bomb.getMidPoint().distance(ballMiddle.x, ballMiddle.y);
 		double bombPrevPDist = bomb.getMidPoint().distance(previousPositionOfBall.x, previousPositionOfBall.y);
 		
@@ -327,32 +323,21 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 		double angleAtImpact = Math.acos(cosAngleAtImpact);
 		
 		int orientation = Line2D.relativeCCW(bomb.getMiddleX(), bomb.getMiddleY(), ballMiddle.x, ballMiddle.y, previousPositionOfBall.x, previousPositionOfBall.y);
-		Point newBallPos = new Point((int)(previousPositionOfBall.x - ballMiddle.x), (int)(previousPositionOfBall.y - ballMiddle.y));
+		Point newEnergy = new Point((int)(previousPositionOfBall.x - ballMiddle.x), (int)(previousPositionOfBall.y - ballMiddle.y));
 		double rotateAngle = (angleAtImpact * 2) + 3.142;
-		double newBallPosX, newBallPosY;
-		//double rad = Math.toRadians(rotateAngle);
+		double newEnergyX, newEnergyY;
+
 		// apply rotation
 		if(orientation >= 0) {
-			newBallPosX = (newBallPos.x * Math.cos(rotateAngle)) + (newBallPos.y * Math.sin(rotateAngle));
-			newBallPosY = (newBallPos.y * Math.cos(rotateAngle)) - (newBallPos.x * Math.sin(rotateAngle));
+			newEnergyX = (newEnergy.x * Math.cos(rotateAngle)) + (newEnergy.y * Math.sin(rotateAngle));
+			newEnergyY = (newEnergy.y * Math.cos(rotateAngle)) - (newEnergy.x * Math.sin(rotateAngle));
 		} else {
-			newBallPosX = (newBallPos.x * Math.cos(rotateAngle)) - (newBallPos.y * Math.sin(rotateAngle));
-			newBallPosY = (newBallPos.y * Math.cos(rotateAngle)) + (newBallPos.x * Math.sin(rotateAngle));			
+			newEnergyX = (newEnergy.x * Math.cos(rotateAngle)) - (newEnergy.y * Math.sin(rotateAngle));
+			newEnergyY = (newEnergy.y * Math.cos(rotateAngle)) + (newEnergy.x * Math.sin(rotateAngle));			
 		}
 		
-		xEnergy = (float) newBallPosX / elapsedTimeInSeconds;
-		yEnergy = (float) newBallPosY / elapsedTimeInSeconds;
-		
-		// transform back after rotation
-		//xEnergy = (float) ((newBallPosX + ballMiddle.x) * elapsedTimeInSeconds);
-		//yEnergy = (float) ((newBallPosY + ballMiddle.y) * elapsedTimeInSeconds);
-		//xEnergy = (float) (newBallPosX + (XFORCE * elapsedTimeInSeconds));
-		//yEnergy = (float) (newBallPosY + (YFORCE * elapsedTimeInSeconds));
-		//ballX = (int) newBallPosX + ballMiddle.x;
-		//ballY = (int) newBallPosY + ballMiddle.y;
-		
-		// change energies
-		
+		xEnergy = (float) newEnergyX / elapsedTimeInSeconds;
+		yEnergy = (float) newEnergyY / elapsedTimeInSeconds;		
 	}
 
 	private void checkImpactWall() {
