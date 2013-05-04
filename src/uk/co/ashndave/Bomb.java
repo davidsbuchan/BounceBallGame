@@ -79,8 +79,8 @@ public class Bomb {
 	public void setPreviousImpactDistance(float previousImpactDistance) {
 		this.previousImpactDistance = previousImpactDistance;
 	}
-	public long Age() {
-		return System.nanoTime() - born;
+	public long Age(long unifiedNowTime) {
+		return unifiedNowTime - born;
 	}
 	
 	public float CurrentEnergy() {

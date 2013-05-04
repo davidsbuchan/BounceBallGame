@@ -273,7 +273,7 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 				Iterator<Bomb> i = bombs.iterator();
 				while(i.hasNext()) {
 					Bomb b = i.next();
-					if(b.Age() > 1000000000l) {
+					if(b.Age(currentTime) > 1000000000l) {
 						i.remove();
 					}
 				}
