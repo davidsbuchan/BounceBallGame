@@ -42,9 +42,10 @@ public class Bomb {
 		return y;
 	}
 	
-	public int getSize() {
-		int currentSize = (int)Age() / 10000000;
-		return currentSize;
+	public int getSize(long unifiedNowTime) {
+		//int currentSize = (int)Age(unifiedNowTime) / 10000000;
+		//return currentSize;
+		return 100;
 	}
 	
 	public long Born() {
@@ -83,8 +84,8 @@ public class Bomb {
 		return unifiedNowTime - born;
 	}
 	
-	public float CurrentEnergy() {
-		float currentEnergy = INITIALENERGY / Age();
+	public float CurrentEnergy(long unifiedNowTime) {
+		float currentEnergy = INITIALENERGY / Age(unifiedNowTime);
 		currentEnergy = (currentEnergy > 2) ? 2 : currentEnergy;
 		return currentEnergy;
 	}

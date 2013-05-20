@@ -28,6 +28,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
+import java.awt.geom.PathIterator;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -51,7 +53,9 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 	private Graphics dbg;
 	private Image dbImage = null;
 	
+	// middle of the ball
 	private int ballX, ballY;
+	// middle of previous position of ball
 	private Point previousPositionOfBall;
 	private static final int SIZE = 10;
 	private static final int HALFSIZE = SIZE / 2;
@@ -59,7 +63,7 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 	private java.util.ArrayList<Bomb> bombs;
 	
 	// Added energy per second;
-	private float YFORCE = 600;
+	private float YFORCE = 1000;
 	private float XFORCE = 0;
 	private float yEnergy, xEnergy;
 	private long currentTime;
@@ -83,6 +87,7 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 		xEnergy = 0;
 		previousPositionOfBall = new Point();
 		bombs = new ArrayList<Bomb>();
+		bombs.add(new Bomb(275, 300));
 		this.setFocusable(true);
 		this.requestFocusInWindow();
 		SetupPanelMouseListener();
@@ -195,13 +200,19 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 				dbg.drawString("^", ballX, 10);
 			}
 			else {
-				dbg.drawOval(ballX, ballY, SIZE, SIZE);
+				dbg.drawOval(ballX - HALFSIZE, ballY - HALFSIZE, SIZE, SIZE);
+				//dbg.setColor(Color.green);
+				//dbg.drawOval(previousPositionOfBall.x - HALFSIZE, previousPositionOfBall.y - HALFSIZE, SIZE, SIZE);
+				//dbg.setColor(Color.red);
+				//dbg.drawLine(ballX, ballY, previousPositionOfBall.x, previousPositionOfBall.y);
+				//dbg.drawLine(bombs.get(0).getMiddleX(), bombs.get(0).getMiddleY(), ballX, ballY);
+				//dbg.drawLine(bombs.get(0).getMiddleX(), bombs.get(0).getMiddleY(), previousPositionOfBall.x, previousPositionOfBall.y);
 			}
 			
 			dbg.setColor(Color.blue);
 			synchronized (BOMBSLOCKOBJECT) {
 				for(Bomb b : bombs) {
-					int currentSize = b.getSize();
+					int currentSize = b.getSize(currentTime);
 					dbg.drawOval(b.getRenderX(currentSize), b.getRenderY(currentSize), currentSize, currentSize);
 				}
 			}
@@ -250,6 +261,7 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 	public void gameUpdate() {
 		if((!gameOver) && (hasStarted)) {
 			elapsedTimeInSeconds = (System.nanoTime() - currentTime) / 1000000000f;
+			//elapsedTimeInSeconds = 0.25f;
 			currentTime = System.nanoTime();
 			previousPositionOfBall.x = ballX;
 			previousPositionOfBall.y = ballY;
@@ -284,27 +296,80 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 	}
 
 	private void checkImpact() {
-		checkImpactWall();
-		checkImpactBombs();
-	}
-
-	private void checkImpactBombs() {
-		Point ballMiddle = new Point(ballX + HALFSIZE, ballY + HALFSIZE);
-		synchronized (BOMBSLOCKOBJECT) {
-			for(Bomb b : bombs) {
-				Point bMid = b.getMidPoint();
-				float minDistance = (b.getSize() / 2) + 5;
-				float distance = (float) ballMiddle.distance(bMid.getX(), bMid.getY());
-				if((distance <= minDistance) && (distance <= b.getPreviousImpactDistance())){
-					b.setPreviousImpactDistance(distance);
-					incrementScore();
-					reactToImpactOfBomb(ballMiddle, b);
-					
-				}
-			}
+		if(!checkImpactWall()) {
+			checkImpactBombs();
 		}
 	}
 
+	private void checkImpactBombs() {
+		Point ball = new Point(ballX, ballY);
+		// get sides of triangle previous, bomb, ball
+		double previousToBall = previousPositionOfBall.distance(ball);
+		for(Bomb bomb : bombs) {
+			double previousToBomb = previousPositionOfBall.distance(bomb.getMidPoint());
+			double bombToBall = ball.distance(bomb.getMidPoint());
+			
+			// get angle at previous using the cosine rule
+			double cosPREV = (Math.pow(previousToBall, 2) + Math.pow(previousToBomb, 2) - Math.pow(bombToBall, 2)) /
+					(2 * previousToBall * previousToBomb);
+			double PREV = Math.acos(cosPREV);
+			
+
+			// find the height of the triangle where the line previous to ball is the base, and the top is the bomb
+			// this will tell us whether the height is less than the radius of the bomb
+			// lets find the angle at bomb of the right angle triangle where the two other points are at previous and bomb
+			double BOMBofRightAngleTriangle = Math.toRadians(90) - PREV;
+			double height = previousToBomb * Math.cos(BOMBofRightAngleTriangle);
+			if(!(height <= (bomb.getSize(currentTime)) / 2)) {
+				// path from previous to ball does not intersect with bomb (even if path continues to infinite)
+				return;
+			}
+			
+			// the path of the ball (if it continues in either direction to infinite) passes close enough (or through)
+			// the bomb to make the ball bounce.
+			// using the sine rule we want to find out the distance from previous to the point where the line
+			// intersects the bomb surface.
+			// we know the angle at PREV and we know the radius
+			// since we also know the distance from bomb to previous, we can calculate the angle at the
+			// impact point using the sine rule.
+			double sinIMPACT = previousToBomb * (Math.sin(PREV) / (bomb.getSize(currentTime) / 2));
+			double IMPACT = Math.asin(sinIMPACT);
+			// impact should always be obtuse. For to be accute the impact is then at the opposite side of
+			// the bombs circumference (along the path between previous and ball)
+			if(IMPACT < Math.toRadians(90)) {
+				IMPACT = Math.toRadians(180) - IMPACT;
+			}
+			double BOMBfromPreviousToImpactAngle = Math.toRadians(180) - (IMPACT + PREV);
+			
+			if(bombToBall > (bomb.getSize(currentTime) / 2)) {
+				// get original bomb angle using cosine rule.
+				// this is to find out if it is accute
+				double cosBOMBFromPrevToBall = (Math.pow(bombToBall, 2) + Math.pow(previousToBomb, 2) - Math.pow(previousToBall, 2)) /
+						(2 * bombToBall * previousToBomb);
+				double BOMBFromPrevToBall = Math.acos(cosBOMBFromPrevToBall);
+				if(BOMBFromPrevToBall < Math.toRadians(90)) {
+					// ball hasn't reached bomb yet so return
+					return;
+				}
+				// the ball as entirely passed through the bomb.
+			}
+			
+			// using the cosine rule we can find out the distance from previous to impact point.
+			//a2 = b2 + c2 - 2bc cos A
+			double prevToImpact = Math.sqrt(Math.pow(50, 2) + Math.pow(previousToBomb, 2) - 
+					((2 * 50 * previousToBomb) * Math.cos(BOMBfromPreviousToImpactAngle)));
+			
+			// now we have the distance from the previous to the impact point.
+			double proportion = prevToImpact / previousToBall;
+
+			ball.x = previousPositionOfBall.x + (int)((ball.x - previousPositionOfBall.x) * proportion);
+			ball.y = previousPositionOfBall.y + (int)((ball.y - previousPositionOfBall.y) * proportion);
+			
+			reactToImpactOfBomb(ball, bomb);
+			break;
+		}
+	}
+	
 	private void incrementScore() {
 		score++;
 	}
@@ -314,9 +379,9 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 		// point 1 is the centre of the bomb
 		// point 2 is the centre of the ball
 		// point 3 is where the centre of the ball was.
-		double ballPrevPDist = ballMiddle.distance(previousPositionOfBall.x, previousPositionOfBall.y);
-		double bombBallDist = bomb.getMidPoint().distance(ballMiddle.x, ballMiddle.y);
-		double bombPrevPDist = bomb.getMidPoint().distance(previousPositionOfBall.x, previousPositionOfBall.y);
+		double ballPrevPDist = ballMiddle.distance(previousPositionOfBall);
+		double bombBallDist = bomb.getMidPoint().distance(ballMiddle);
+		double bombPrevPDist = bomb.getMidPoint().distance(previousPositionOfBall);
 		
 		double cosAngleAtImpact = (Math.pow(ballPrevPDist, 2) + Math.pow(bombBallDist, 2) - Math.pow(bombPrevPDist, 2)) / 
 				(2 * ballPrevPDist * bombBallDist);
@@ -337,24 +402,28 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 		}
 		
 		xEnergy = (float) newEnergyX / elapsedTimeInSeconds;
-		yEnergy = (float) newEnergyY / elapsedTimeInSeconds;		
+		yEnergy = (float) newEnergyY / elapsedTimeInSeconds;
 	}
 
-	private void checkImpactWall() {
+	private boolean checkImpactWall() {
+		boolean hasBouncedOffWall = false;
 		// If ball is touching the ground and
 		// if energy is pointing down (It's positive)
 		if((ballY >= (PHEIGHT-10)) && (yEnergy > 0)) {
 			lives--;
 			if(yEnergy >= minEnergyAtImpact) {
 				yEnergy = ((yEnergy * 0.80f) - 80) * -1;
+				hasBouncedOffWall = true;
 			}
 		}
 		
 		if(((ballX >= (PWIDTH-10)) || (ballX <= 10)) && (Math.abs(xEnergy) > 0)) {
 			if(Math.abs(xEnergy) >= minEnergyAtImpact) {
 				xEnergy = ((xEnergy * 0.8f) - 80) * -1;
-			}			
+				hasBouncedOffWall = true;
+			}
 		}
+		return hasBouncedOffWall;
 	}
 
 	@Override
