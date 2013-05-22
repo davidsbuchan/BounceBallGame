@@ -30,6 +30,7 @@ import java.awt.event.MouseListener;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -54,21 +55,21 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 	private Image dbImage = null;
 	
 	// middle of the ball
-	private int ballX, ballY;
+	private double ballX, ballY;
 	// middle of previous position of ball
-	private Point previousPositionOfBall;
+	private Point2D.Double previousPositionOfBall;
 	private static final int SIZE = 10;
 	private static final int HALFSIZE = SIZE / 2;
 	
 	private java.util.ArrayList<Bomb> bombs;
 	
 	// Added energy per second;
-	private float YFORCE = 1000;
-	private float XFORCE = 0;
-	private float yEnergy, xEnergy;
+	private double YFORCE = 1000;
+	private double XFORCE = 0;
+	private double yEnergy, xEnergy;
 	private long currentTime;
-	private float elapsedTimeInSeconds;
-	private float minEnergyAtImpact = 60;
+	private double elapsedTimeInSeconds;
+	private double minEnergyAtImpact = 60;
 	
 	private int lives = 3;
 	
@@ -85,7 +86,7 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 		ballY = 0;
 		yEnergy = 0;
 		xEnergy = 0;
-		previousPositionOfBall = new Point();
+		previousPositionOfBall = new Point2D.Double();
 		bombs = new ArrayList<Bomb>();
 		bombs.add(new Bomb(275, 300));
 		this.setFocusable(true);
@@ -197,10 +198,10 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 			if(ballY < 0) {
 				// ball is too high and off the screen
 				// draw a marker at top of screen showing x position
-				dbg.drawString("^", ballX, 10);
+				dbg.drawString("^", (int)ballX, 10);
 			}
 			else {
-				dbg.drawOval(ballX - HALFSIZE, ballY - HALFSIZE, SIZE, SIZE);
+				dbg.drawOval((int)ballX - HALFSIZE, (int)ballY - HALFSIZE, SIZE, SIZE);
 				//dbg.setColor(Color.green);
 				//dbg.drawOval(previousPositionOfBall.x - HALFSIZE, previousPositionOfBall.y - HALFSIZE, SIZE, SIZE);
 				//dbg.setColor(Color.red);
@@ -212,8 +213,8 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 			dbg.setColor(Color.blue);
 			synchronized (BOMBSLOCKOBJECT) {
 				for(Bomb b : bombs) {
-					int currentSize = b.getSize(currentTime);
-					dbg.drawOval(b.getRenderX(currentSize), b.getRenderY(currentSize), currentSize, currentSize);
+					double currentSize = b.getSize(currentTime);
+					dbg.drawOval((int)b.getRenderX(currentSize), (int)b.getRenderY(currentSize), (int)currentSize, (int)currentSize);
 				}
 			}
 			
@@ -269,7 +270,7 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 			yEnergy += (YFORCE * elapsedTimeInSeconds);
 			xEnergy += (XFORCE * elapsedTimeInSeconds);
 			// make sure ball isn't going too fast.
-			float zEnergy = (float) Math.sqrt(Math.pow(yEnergy,2) + Math.pow(xEnergy, 2));
+			double zEnergy = Math.sqrt(Math.pow(yEnergy,2) + Math.pow(xEnergy, 2));
 			if(zEnergy > 800) {
 				yEnergy = (yEnergy / zEnergy) * 800;
 				xEnergy = (xEnergy / zEnergy) * 800;
@@ -302,7 +303,7 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 	}
 
 	private void checkImpactBombs() {
-		Point ball = new Point(ballX, ballY);
+		Point2D.Double ball = new Point2D.Double(ballX, ballY);
 		// get sides of triangle previous, bomb, ball
 		double previousToBall = previousPositionOfBall.distance(ball);
 		for(Bomb bomb : bombs) {
@@ -362,8 +363,8 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 			// now we have the distance from the previous to the impact point.
 			double proportion = prevToImpact / previousToBall;
 
-			ball.x = previousPositionOfBall.x + (int)((ball.x - previousPositionOfBall.x) * proportion);
-			ball.y = previousPositionOfBall.y + (int)((ball.y - previousPositionOfBall.y) * proportion);
+			ball.x = previousPositionOfBall.x + ((ball.x - previousPositionOfBall.x) * proportion);
+			ball.y = previousPositionOfBall.y + ((ball.y - previousPositionOfBall.y) * proportion);
 			
 			reactToImpactOfBomb(ball, bomb);
 			break;
@@ -374,7 +375,7 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 		score++;
 	}
 
-	private void reactToImpactOfBomb(Point ballMiddle, Bomb bomb) {
+	private void reactToImpactOfBomb(Point2D.Double ballMiddle, Bomb bomb) {
 		// the cosine rule bit
 		// point 1 is the centre of the bomb
 		// point 2 is the centre of the ball
@@ -388,7 +389,7 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 		double angleAtImpact = Math.acos(cosAngleAtImpact);
 		
 		int orientation = Line2D.relativeCCW(bomb.getMiddleX(), bomb.getMiddleY(), ballMiddle.x, ballMiddle.y, previousPositionOfBall.x, previousPositionOfBall.y);
-		Point newEnergy = new Point((int)(previousPositionOfBall.x - ballMiddle.x), (int)(previousPositionOfBall.y - ballMiddle.y));
+		Point2D.Double newEnergy = new Point2D.Double((previousPositionOfBall.x - ballMiddle.x), (previousPositionOfBall.y - ballMiddle.y));
 		double rotateAngle = (angleAtImpact * 2) + 3.142;
 		double newEnergyX, newEnergyY;
 
@@ -401,8 +402,8 @@ public class GamePanel extends JPanel implements Updateable, Renderable {
 			newEnergyY = (newEnergy.y * Math.cos(rotateAngle)) + (newEnergy.x * Math.sin(rotateAngle));			
 		}
 		
-		xEnergy = (float) newEnergyX / elapsedTimeInSeconds;
-		yEnergy = (float) newEnergyY / elapsedTimeInSeconds;
+		xEnergy = newEnergyX / elapsedTimeInSeconds;
+		yEnergy = newEnergyY / elapsedTimeInSeconds;
 	}
 
 	private boolean checkImpactWall() {

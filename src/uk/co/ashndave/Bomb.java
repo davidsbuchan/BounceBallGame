@@ -17,67 +17,68 @@
 package uk.co.ashndave;
 
 import java.awt.Point;
+import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 
 public class Bomb {
 	
 	public static final float INITIALENERGY = 500000000;
 		
-	private int x, y;
+	private double x, y;
 	private long born;
-	private Point midPoint;
-	private float previousImpactDistance = Float.MAX_VALUE;
+	private Point2D.Double midPoint;
+	private double previousImpactDistance = java.lang.Double.MAX_VALUE;
 	
-	public Bomb(int x, int y) {
+	public Bomb(double x, double y) {
 		this.x = x;
 		this.y = y;
-		midPoint = new Point(x, y);
+		midPoint = new Point2D.Double(x, y);
 		born = System.nanoTime();
 	}
 	
-	public int getX() {
+	public double getX() {
 		return x;
 	}
 	
-	public int getY() {
+	public double getY() {
 		return y;
 	}
 	
-	public int getSize(long unifiedNowTime) {
-		//int currentSize = (int)Age(unifiedNowTime) / 10000000;
-		//return currentSize;
-		return 100;
+	public double getSize(long unifiedNowTime) {
+		double currentSize = Age(unifiedNowTime) / 10000000;
+		return currentSize;
 	}
 	
 	public long Born() {
 		return born;
 	}
 	
-	public int getRenderX(int currentSize) {
-		int renderX = x - (currentSize / 2);
+	public double getRenderX(double currentSize) {
+		double renderX = x - (currentSize / 2);
 		return renderX;
 	}
 	
-	public int getRenderY(int currentSize) {
-		int renderY = y - (currentSize / 2);
+	public double getRenderY(double currentSize) {
+		double renderY = y - (currentSize / 2);
 		return renderY;
 	}
 	
-	public int getMiddleX() {
+	public double getMiddleX() {
 		return x;
 	}
 	
-	public int getMiddleY() {
+	public double getMiddleY() {
 		return y;
 	}
 	
-	public Point getMidPoint() {
+	public Point2D.Double getMidPoint() {
 		return midPoint;
 	}
 	
-	public float getPreviousImpactDistance() {
+	public double getPreviousImpactDistance() {
 		return previousImpactDistance;
 	}
-	public void setPreviousImpactDistance(float previousImpactDistance) {
+	public void setPreviousImpactDistance(double previousImpactDistance) {
 		this.previousImpactDistance = previousImpactDistance;
 	}
 	public long Age(long unifiedNowTime) {
